@@ -9,7 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import {RootStack} from '../../navigations/TypeChecking';
 import TextComponent from '../../components/TextComponent';
 import InputComponent from '../../components/InputComponent';
-import {taskModel} from '../../model/TaskModel';
+import {AttachmentModel, taskModel} from '../../model/TaskModel';
 import DateTimePickerComponent from '../../components/DateTimePickerComponent';
 import RowComponent from '../../components/RowComponent';
 import SpaceComponent from '../../components/SpaceComponent';
@@ -18,7 +18,12 @@ import {SelectModal} from '../../model/SelectModal';
 import firestore, {and} from '@react-native-firebase/firestore';
 import ButtonComponent from '../../components/ButtonComponent';
 import storage from '@react-native-firebase/storage';
-import {DocumentPickerResponse, pick} from 'react-native-document-picker';
+import {
+  DocumentPickerResponse,
+  pick,
+  types,
+} from 'react-native-document-picker';
+import UploadFileFromStorageCompopnent from '../../components/UploadFileFromStorageCompopnent';
 
 const initialVal: taskModel = {
   title: '',
@@ -27,21 +32,17 @@ const initialVal: taskModel = {
   start: new Date(),
   end: new Date(),
   uids: [],
-  fileUrls: [],
+  attachment: [],
   id: '',
-  progress: '',
-
+  progress: 0,
 };
 const TaskScreen = () => {
   const [addtask, setaddtask] = useState<taskModel>(initialVal);
 
   const [dataUserModal, setdataUserModal] = useState<SelectModal[]>([]);
 
-  const [dataAttachment, setDataAttechment] = useState<
-    DocumentPickerResponse[]
-  >([]);
+  const [dataAttachment, setDataAttechment] = useState<AttachmentModel[]>([]);
 
-  const [AttachMentUrl, setAttachMentUrl] = useState<string[]>([]);
   const onGetdataUserFromFirebase = async () => {
     await firestore()
       .collection('users')
@@ -78,46 +79,17 @@ const TaskScreen = () => {
   };
 
   const handleAddtask = async () => {
+    const data = {...addtask, attachment: [...dataAttachment]};
 
-    const data = {...addtask , 
-      fileUrls:AttachMentUrl
-    }
-    
-    
     await firestore()
       .collection('tasks')
       .add(data)
-      .then(() => 
-        navigation.goBack())
+      .then(() => navigation.goBack())
       .catch(error => console.log(error.messgae));
   };
-  const handleUploadAttachMentFormStorage = async (
-    item: DocumentPickerResponse,
-  ) => {
-    const items = [...AttachMentUrl];
-    const filename = item.name ?? `file.${Date.now()}`;
-    const path = `documents/${filename}`;
-    console.log(item.uri);
-    await storage().ref(path).putFile(item.uri);
-    await storage()
-      .ref(path)
-      .getDownloadURL()
-      .then(dataurl => {
-        items.push(dataurl);
-        setAttachMentUrl(items)
-      });
 
-    
-  };
-
-  const handleOpenDocumentPicker = async () => {
-    await pick({allowMultiSelection: true})
-      .then(res => {
-        setDataAttechment(res);
-        res.forEach(item => handleUploadAttachMentFormStorage(item));
-
-      })
-      .catch(error => console.log(error));
+  const hanldeChangeFile = (data: AttachmentModel) => {
+    setDataAttechment([...dataAttachment, data]);
   };
 
   const navigation = useNavigation<RootStack>();
@@ -140,14 +112,14 @@ const TaskScreen = () => {
 
         <View>
           <InputComponent
-            value={addtask.title}
+            value={addtask.title ?? ''}
             onChange={val => handleChangeValue('title', val)}
             placeHolder="hello"
             alowClear
             title="Title"
           />
           <InputComponent
-            value={addtask.description}
+            value={addtask.description ?? ''}
             onChange={val => handleChangeValue('description', val)}
             placeHolder="description"
             alowClear
@@ -195,13 +167,15 @@ const TaskScreen = () => {
           items={dataUserModal && dataUserModal}
         />
 
-        <RowComponent onPress={() => handleOpenDocumentPicker()}>
-          <TextComponent text="Attachments" style={{flex: 1}} />
+        <RowComponent jutifilecontent="flex-start">
+          <TextComponent text="Attachments" style={{}} />
+          <UploadFileFromStorageCompopnent
+            onchangeFile={val => hanldeChangeFile(val)}
+          />
         </RowComponent>
-        {dataAttachment &&
-          dataAttachment.map((data, index) => (
-            <TextComponent key={index} text={data.name ?? ''} />
-          ))}
+        {dataAttachment.map((data, index) => (
+          <TextComponent key={index} text={data.name ?? ''} />
+        ))}
       </ContainerComponent>
 
       <ButtonComponent

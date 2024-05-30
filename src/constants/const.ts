@@ -21,4 +21,19 @@ export const namedate = [
     'Nov' , 
     'Dec'
 ]
+
+
+export const calFileSize = (size:number)=>{
+    const  fsExt = ['Bytes' , 'KB' ,'MB' , 'GB'];
+    let i = 0
+
+    while(size>900){
+        size/=1024 
+        i++
+    }
+
+
+        var exectSize = Math.floor(size*100)/100+' '+  fsExt[i]
+    return exectSize
+}
    

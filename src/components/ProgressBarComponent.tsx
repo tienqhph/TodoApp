@@ -5,7 +5,7 @@ import TextComponent from './TextComponent';
 
 interface Props {
   color?: string;
-  percent: DimensionValue;
+  percent: number;
   size?: number;
 }
 const ProgressBarComponent = ({color, percent, size}: Props) => {
@@ -21,13 +21,13 @@ const ProgressBarComponent = ({color, percent, size}: Props) => {
           style={{
             backgroundColor: color ?? 'rgba(33,150,243,0.8)',
             height: 8,
-            width: percent,
+            width: `${percent}%`,
             borderRadius: 16,
           }}></View>
       </View>
       <RowComponent jutifilecontent='space-between'>
         <TextComponent text='Progress' size={12}/>
-        <TextComponent text={`${percent}`}/>
+        <TextComponent text={`${percent}%`}/>
       </RowComponent>
 
     </View>

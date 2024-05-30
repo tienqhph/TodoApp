@@ -23,7 +23,7 @@ const AvatarComponent = (props :Props) => {
   
     const [dataUserSlected, setdataUserSlected] = useState<SelectModal[]>([]);
  
-  const {uids} = props
+    const {uids} = props
 
 
 
@@ -32,8 +32,6 @@ const AvatarComponent = (props :Props) => {
        uids.map(item =>{  
         
         firestore().doc(`users/${item}`).onSnapshot((snap :any)=>{
-
-          console.log("gọi lại data uer")
           newdata.push({ 
             label:snap.data().name , 
             value:item
@@ -52,7 +50,7 @@ useEffect(() => {
 
     console.log('data' , dataUserSlected.length)
 
-}, []);
+}, [uids]);
   return (
     <RowComponent jutifilecontent="flex-start">
       {dataUserSlected.map(
