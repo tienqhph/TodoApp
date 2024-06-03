@@ -37,26 +37,33 @@ const UploadFileFromStorageCompopnent = (props: Props) => {
     }
   }, [attachmentFile]);
 
-  const handleUpLoadFile = async () => {
+  const handleUpLoadFile = () => {
     if (files) {
       setisvissibleModal(true);
       const path = `documents/${files.name}`;
 
-      const res = await storage().ref(path).putFile(files.uri);
-      setprogressUpload(res.bytesTransferred / res.totalBytes);
-      storage()
-        .ref(path)
-        .getDownloadURL()
-        .then(url => {
-          const data: AttachmentModel = {
-            name: files.name ?? '',
-            url,
-            size: files.size ?? 0,
-          };
+      const res = storage().ref(path).putFile(files.uri);
+      res.on('state_changed', task => {
+        setprogressUpload(task.bytesTransferred / task.totalBytes);
+      });
 
-          setattachmentFile(data);
-        })
-        .catch(error => console.log(error.message));
+      res.then(() => {
+        storage()
+          .ref(path)
+          .getDownloadURL()
+          .then(url => {
+            const data: AttachmentModel = {
+              name: files.name ?? '',
+              url,
+              size: files.size ?? 0,
+            };
+
+            setattachmentFile(data);
+          })
+          .catch(error => console.log(error.message));
+      });
+
+      res.catch(error => console.log(error.message));
     }
   };
   return (

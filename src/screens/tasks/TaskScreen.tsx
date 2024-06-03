@@ -5,8 +5,8 @@ import SectionConponent from '../../components/SectionConponent';
 import HeaderAppComponent from '../../components/HeaderAppComponent';
 import {Back, Clock, PenAdd} from 'iconsax-react-native';
 import {colors} from '../../constants/colors';
-import {useNavigation} from '@react-navigation/native';
-import {RootStack} from '../../navigations/TypeChecking';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {RootStack, RouterPropEditTask} from '../../navigations/TypeChecking';
 import TextComponent from '../../components/TextComponent';
 import InputComponent from '../../components/InputComponent';
 import {AttachmentModel, taskModel} from '../../model/TaskModel';
@@ -24,7 +24,7 @@ import {
   types,
 } from 'react-native-document-picker';
 import UploadFileFromStorageCompopnent from '../../components/UploadFileFromStorageCompopnent';
-
+import auth from '@react-native-firebase/auth';
 const initialVal: taskModel = {
   title: '',
   description: '',
@@ -35,13 +35,38 @@ const initialVal: taskModel = {
   attachment: [],
   id: '',
   progress: 0,
+  isUrgen: false
 };
+
 const TaskScreen = () => {
+  const {params} = useRoute<RouterPropEditTask>();
   const [addtask, setaddtask] = useState<taskModel>(initialVal);
 
   const [dataUserModal, setdataUserModal] = useState<SelectModal[]>([]);
 
   const [dataAttachment, setDataAttechment] = useState<AttachmentModel[]>([]);
+
+  const user = auth().currentUser;
+
+  useEffect(() => {
+    onGetdataUserFromFirebase();
+    console.log('leeeee', dataUserModal.length);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      user && setaddtask({...addtask, uids: [user.uid]});
+    }
+  }, [user]);
+  useEffect(() => {
+    setaddtask({
+      ...addtask,
+      title: params?.datatask.title ?? '',
+      description: params?.datatask.description,
+      uids: params?.datatask.uids,
+    });
+  }, [user]);
+  console.log(params?.editable, params?.datatask);
 
   const onGetdataUserFromFirebase = async () => {
     await firestore()
@@ -54,7 +79,7 @@ const TaskScreen = () => {
           const itemuser: SelectModal[] = [];
           datauser.forEach(item => {
             itemuser.push({
-              label: item.data().name,
+              label: item.data().displayName,
               value: item.id,
             });
           });
@@ -66,11 +91,6 @@ const TaskScreen = () => {
       });
   };
 
-  useEffect(() => {
-    onGetdataUserFromFirebase();
-    console.log('leeeee', dataUserModal.length);
-  }, []);
-
   const handleChangeValue = (key: string, value: string | string[] | Date) => {
     const newdata: any = {...addtask};
     newdata[`${key}`] = value;
@@ -79,13 +99,25 @@ const TaskScreen = () => {
   };
 
   const handleAddtask = async () => {
-    const data = {...addtask, attachment: [...dataAttachment]};
+    if (user) {
+      const data = {...addtask, attachment: [...dataAttachment]};
 
-    await firestore()
-      .collection('tasks')
-      .add(data)
-      .then(() => navigation.goBack())
-      .catch(error => console.log(error.messgae));
+      if (params?.datatask) {
+        await firestore()
+          .doc(`tasks/${params.datatask.taskid}`)
+          .update(data)
+          .then(() => {
+            console.log('update sucsessfuly ')
+            navigation.goBack()
+          });
+      } else {
+        await firestore()
+          .collection('tasks')
+          .add(data)
+          .then(() => navigation.goBack())
+          .catch(error => console.log(error.messgae));
+      }
+    }
   };
 
   const hanldeChangeFile = (data: AttachmentModel) => {
@@ -179,7 +211,7 @@ const TaskScreen = () => {
       </ContainerComponent>
 
       <ButtonComponent
-        title="Save"
+        title={params?.datatask ? 'Update' : 'Save'}
         onPress={() => handleAddtask()}
         style={{
           flex: 0,

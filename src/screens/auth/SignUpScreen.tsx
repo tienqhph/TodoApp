@@ -13,6 +13,7 @@ import RowComponent from '../../components/RowComponent';
 import {useNavigation} from '@react-navigation/native';
 import {RootStack, RootStackParamList} from '../../navigations/TypeChecking';
 import auth from '@react-native-firebase/auth';
+import { HandleUser } from '../../model/handleUsers';
 const SignUpScreen = () => {
   const [Email, setEmail] = useState('');
   const [textError, settextError] = useState('');
@@ -34,6 +35,8 @@ const SignUpScreen = () => {
         .createUserWithEmailAndPassword(Email, Password)
         .then(usercredential => {
           const user = usercredential.user;
+
+          HandleUser.SaveUserToDatabase(user)
           setshowIndicator(false);
         })
         .catch((error: any) => {

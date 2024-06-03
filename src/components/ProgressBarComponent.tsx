@@ -10,7 +10,7 @@ interface Props {
 }
 const ProgressBarComponent = ({color, percent, size}: Props) => {
   return (
-    <View  style = {{paddingTop:12 , paddingBottom:24}}>
+    <View style={{paddingTop: 12, paddingBottom: 24}}>
       <View
         style={{
           backgroundColor: 'rgba(0,0,0,0.4)',
@@ -25,11 +25,10 @@ const ProgressBarComponent = ({color, percent, size}: Props) => {
             borderRadius: 16,
           }}></View>
       </View>
-      <RowComponent jutifilecontent='space-between'>
-        <TextComponent text='Progress' size={12}/>
-        <TextComponent text={`${percent}%`}/>
+      <RowComponent jutifilecontent="space-between">
+        <TextComponent text="Progress" size={12} />
+        <TextComponent text={`${percent}%`} />
       </RowComponent>
-
     </View>
   );
 };

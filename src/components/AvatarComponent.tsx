@@ -7,6 +7,7 @@ import { fonts } from '../constants/fontFamily';
 
 import firestore from '@react-native-firebase/firestore'
 import { SelectModal } from '../model/SelectModal';
+import { UserDetail } from '../model/userDetail';
 
 
 interface Props  {
@@ -21,7 +22,7 @@ interface Props  {
 
 const AvatarComponent = (props :Props) => {
   
-    const [dataUserSlected, setdataUserSlected] = useState<SelectModal[]>([]);
+    const [dataUserSlected, setdataUserSlected] = useState<UserDetail[]>([]);
  
     const {uids} = props
 
@@ -33,8 +34,8 @@ const AvatarComponent = (props :Props) => {
         
         firestore().doc(`users/${item}`).onSnapshot((snap :any)=>{
           newdata.push({ 
-            label:snap.data().name , 
-            value:item
+              uids , 
+              ...snap.data()
           })
 
           const data = [...newdata]
@@ -64,7 +65,7 @@ useEffect(() => {
                 index > 0 ? {marginLeft: -12} : {marginLeft: 0},
               ]}
             >
-                <TextComponent text={data.label.charAt(0)} size={18} font={fonts.bold}/>
+                <TextComponent text={data.displayName.charAt(0).toUpperCase()} size={18} font={fonts.bold}/>
             </View>
           ),
       )}

@@ -63,12 +63,12 @@ const DropDownComponent = (props: Props) => {
       setListDataSelected([id]);
     }
   };
-  const handleRemoveUserSelected = (index:number)=>{
-    if(selected){
-        selected.splice(index , 1)
-        onselected(selected)
+  const handleRemoveUserSelected = (index: number) => {
+    if (selected) {
+      selected.splice(index, 1);
+      onselected(selected);
     }
-  }
+  };
 
   const handleConfirm = () => {
     setisShowModal(false);
@@ -80,8 +80,7 @@ const DropDownComponent = (props: Props) => {
     const listitem = items.find(item => item.value === id);
     return (
       <RowComponent
-    
-      onPress={()=>handleRemoveUserSelected(index)}
+        onPress={() => handleRemoveUserSelected(index)}
         key={index}
         borerRadius={12}
         style={{margin: 8, padding: 10, borderWidth: 1, borderColor: 'white'}}
@@ -101,8 +100,8 @@ const DropDownComponent = (props: Props) => {
           style={{paddingVertical: 12}}
           onPress={() => setisShowModal(true)}>
           {selected && selected.length > 0 ? (
-            <RowComponent 
-              style={{flexWrap: 'wrap', borderRadius: 12 ,flex:1}}
+            <RowComponent
+              style={{flexWrap: 'wrap', borderRadius: 12, flex: 1}}
               jutifilecontent="flex-start">
               {selected.map((id, index) => renderDataUids(id, index))}
             </RowComponent>
@@ -124,12 +123,13 @@ const DropDownComponent = (props: Props) => {
             flex: 1,
             backgroundColor: colors.bgcolor,
             paddingVertical: 50,
+            paddingHorizontal: 20,
           }}>
           <FlatList
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <RowComponent style={{flex: 1}}>
-                <View style={{flex: 1, paddingHorizontal: 10}}>
+                <View style={{flex: 1, paddingRight: 10}}>
                   <InputComponent
                     placeHolder="search"
                     onChange={val => setTextSearch(val)}

@@ -12,7 +12,7 @@ const SectionConponent = (props: Props) => {
   const {children, style, onpress} = props;
   return onpress ? (
     <TouchableOpacity style={[styles.section, style]} onPress={onpress}>
-      <View >{children}</View>
+      <View>{children}</View>
     </TouchableOpacity>
   ) : (
     <View style={[styles.section, style]}>{children}</View>

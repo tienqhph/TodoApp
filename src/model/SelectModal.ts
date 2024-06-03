@@ -1,7 +1,4 @@
-
-
-
-export  interface SelectModal {
-    label:string , 
-    value:string
+export interface SelectModal {
+  label: string;
+  value: string;
 }

@@ -11,6 +11,7 @@ import {
   PermissionsAndroid,
   Platform,
   ScrollView,
+  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -36,58 +37,8 @@ import ProgressBarComponent from '../../components/ProgressBarComponent';
 import SpaceComponent from '../../components/SpaceComponent';
 import {taskModel} from '../../model/TaskModel';
 import {RootStack} from '../../navigations/TypeChecking';
+import { namedate } from '../../constants/const';
 
-const requestReadPermission = async () => {
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      {
-        title: 'Storage Permission',
-        message: 'This app needs access to your storage to read files.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('You can read from storage');
-    } else {
-      console.log('Read permission denied');
-    }
-  } catch (err) {
-    console.warn(err);
-  }
-};
-
-const requestWritePermission = async () => {
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      {
-        title: 'Storage Permission',
-        message: 'This app needs access to your storage to write files.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('You can write to storage');
-    } else {
-      console.log('Write permission denied11111');
-    }
-  } catch (err) {
-    console.warn(err);
-  }
-};
-
-const GotoAddTask1 = async () => {
-  console.log('vào đây');
-  await requestReadPermission();
-  await requestWritePermission();
-};
 
 const HomeScreen = () => {
   const user = auth().currentUser;
@@ -99,6 +50,10 @@ const HomeScreen = () => {
 
   const [dataTasks, setdataTasks] = useState<taskModel[]>([]);
 
+  const [dataUrrgent, setdataUrrgent] = useState<taskModel[]>([]);
+
+  const [tasdone, settasdone] = useState(0);
+
   const getDataFromJsonPleaceHolder = async () => {
     await axios
       .get('https://jsonplaceholder.typicode.com/users')
@@ -106,14 +61,22 @@ const HomeScreen = () => {
         setdataUser(dataget.data);
       });
   };
+useEffect(() => {
+    if(dataTasks){
+        const persentTaskDone =Math.floor(dataTasks.filter(element=>element.progress===1).length/dataTasks.length*100)
 
+        settasdone(persentTaskDone)
+     
+    }
+ 
+}, [dataTasks]);
   const HandleGetTasks = () => {
     setloadingdata(true);
 
     firestore()
       .collection('tasks')
-      .orderBy('dueDate', 'asc')
-      .limitToLast(3)
+      .where('uids', 'array-contains', user?.uid)
+      .limit(3)
       .onSnapshot(snap => {
         if (snap.empty) {
           console.log('snap not found');
@@ -126,7 +89,9 @@ const HomeScreen = () => {
               } as taskModel),
           );
           setloadingdata(false);
-          setdataTasks(items); // Cập nhật trạng thái với dữ liệu mới
+
+          const sortdata = items.sort((a:any , b:any)=>b.dueDate - a.dueDate )
+          setdataTasks(sortdata); // Cập nhật trạng thái với dữ liệu mới
           console.log('dataTasks', items); // Log the items instead of state here
         }
       });
@@ -148,50 +113,25 @@ const HomeScreen = () => {
   const handleGotoTaskDetail = (id: any, color: string) => {
     navigation.navigate('TaskDetail', {data: id, color: color});
   };
-  const requestStoragePermission = async () => {
-    try {
-      const readGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to read files.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-
-      const writeGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to write files.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-
-      if (readGranted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can read from storage');
-      } else {
-        console.log('Read permission denied');
-      }
-
-      if (writeGranted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can write to storage');
-      } else {
-        console.log('Write permission denied');
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  };
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      requestStoragePermission();
-    }
+    getDataByUrrgen();
   }, []);
+  const getDataByUrrgen = () => {
+    
+      firestore()
+        .collection('tasks')
+        .where('uids', 'array-contains', user?.uid)
+        .where('isUrgen', '==', true)
+        .onSnapshot(snap => {
+          const dataUrrgen: any = [];
+          snap.forEach(data => {
+            dataUrrgen.push(data.data())
+            const datacopy = [...dataUrrgen];
+            setdataUrrgent(datacopy);
+          });
+     
+        }); 
+  };
   return (
     <View style={{backgroundColor: colors.bgcolor, flex: 1}}>
       <ScrollView>
@@ -221,8 +161,12 @@ const HomeScreen = () => {
           </SectionConponent>
           <SectionConponent>
             <RowComponent
-              onPress={() => navigation.navigate('Search')}
-              style={{backgroundColor: colors.gray}}
+         onPress ={()=>navigation.navigate('AllTask' , {data:dataTasks})}
+              style={{
+                backgroundColor: colors.gray,
+                paddingHorizontal: 20,
+                paddingVertical: 20,
+              }}
               borerRadius={12}>
               <TextComponent text="Search" flex={1} />
               <SearchNormal1 size={24} color="#ffffff" />
@@ -230,7 +174,7 @@ const HomeScreen = () => {
           </SectionConponent>
 
           <SectionConponent>
-            <CardComponent bgColor={colors.gray} style={{borderRadius: 12}}>
+            <CardComponent onpress ={()=>navigation.navigate('AllTask' , {data:dataTasks})}bgColor={colors.gray} style={{borderRadius: 12}}>
               <RowComponent jutifilecontent="space-between" borerRadius={12}>
                 <View>
                   <TextComponent
@@ -239,7 +183,7 @@ const HomeScreen = () => {
                     font={fonts.semibold}
                   />
                   <TitleComponent
-                    title="30/40  task done"
+                    title={`${dataTasks.filter(elenemt=>elenemt.progress===1).length}/${dataTasks.length} task done `}
                     size={12}
                     color={colors.title}
                   />
@@ -256,11 +200,11 @@ const HomeScreen = () => {
                           borderRadius: 20,
                         },
                       ]}>
-                      <TextComponent text="March 22" />
+                      <TextComponent text={`${namedate[new Date().getMonth()]}  ${new Date().getDate()}`} />
                     </TouchableOpacity>
                   </RowComponent>
                 </View>
-                <CircularProgressComponent value={80} valueSuffix="%" />
+                <CircularProgressComponent value={tasdone?tasdone:0} valueSuffix="%" />
               </RowComponent>
             </CardComponent>
           </SectionConponent>
@@ -285,7 +229,14 @@ const HomeScreen = () => {
                         borderRadius: 12,
                       }}>
                       <ImageCardComponent>
-                        <TouchableOpacity style={styles.viewIconedit}>
+                        <TouchableOpacity
+                          style={styles.viewIconedit}
+                          onPress={() =>
+                            navigation.navigate('AddTask', {
+                              editable: true,
+                              datatask: dataTasks[0],
+                            })
+                          }>
                           <Edit2 size={24} color="#ffffff" />
                         </TouchableOpacity>
                         <TextComponent
@@ -305,14 +256,12 @@ const HomeScreen = () => {
                             uids={dataTasks[0].uids ?? []}
                           />
 
-                          {dataTasks[0].progress && (
-                            <ProgressBarComponent
-                              percent={Math.floor(
-                                (dataTasks[0].progress ?? 0) * 100,
-                              )}
-                              size={12}
-                            />
-                          )}
+                          <ProgressBarComponent
+                            percent={Math.floor(
+                              (dataTasks[0].progress ?? 0) * 100,
+                            )}
+                            size={12}
+                          />
                         </View>
 
                         <TextComponent
@@ -334,11 +283,18 @@ const HomeScreen = () => {
                         onpress={() =>
                           handleGotoTaskDetail(
                             dataTasks[1],
-                            'rgba(33,150,243,0.8)',
+                            'rgba(113,77,217,0.8)',
                           )
                         }>
                         <ImageCardComponent color="rgba(33,150,243,0.8)">
-                          <TouchableOpacity style={styles.viewIconedit}>
+                          <TouchableOpacity
+                            style={styles.viewIconedit}
+                            onPress={() =>
+                              navigation.navigate('AddTask', {
+                                editable: true,
+                                datatask: dataTasks[1],
+                              })
+                            }>
                             <Edit2 size={24} color="#ffffff" />
                           </TouchableOpacity>
                           <TextComponent
@@ -374,7 +330,14 @@ const HomeScreen = () => {
                             )
                           }>
                           <ImageCardComponent color="rgba(18,181,122,0.8)">
-                            <TouchableOpacity style={styles.viewIconedit}>
+                            <TouchableOpacity
+                              style={styles.viewIconedit}
+                              onPress={() =>
+                                navigation.navigate('AddTask', {
+                                  editable: true,
+                                  datatask: dataTasks[2],
+                                })
+                              }>
                               <Edit2 size={24} color="#ffffff" />
                             </TouchableOpacity>
                             <TextComponent
@@ -402,15 +365,19 @@ const HomeScreen = () => {
                   font={fonts.semibold}
                 />
 
-                <CardComponent bgColor={colors.gray} style={{borderRadius: 12}}>
-                  <RowComponent
-                    jutifilecontent="space-between"
-                    style={{alignItems: 'flex-start'}}>
-                    <CircularProgressComponent value={40} valueSuffix="%" />
+                {dataUrrgent&&dataUrrgent.map((data, index) => (
+                  <CardComponent key={index}
+                    bgColor={colors.gray}
+                    style={{borderRadius: 12 , marginVertical:10}}>
+                    <RowComponent
+                      jutifilecontent="space-between"
+                      style={{alignItems: 'flex-start'}}>
+                      <CircularProgressComponent value={(data.progress??0)*100} valueSuffix="%" />
 
-                    <TextComponent text="Title" />
-                  </RowComponent>
-                </CardComponent>
+                      <TextComponent text={data.title+''} />
+                    </RowComponent>
+                  </CardComponent>
+                ))}
               </SectionConponent>
             </View>
           ) : (

@@ -20,7 +20,7 @@ const DateTimePickerComponent = (props: Props) => {
 
   const [isvisibedatetime, setisvisibedatetime] = useState(false);
 
-  const [date, setdate] = useState(selected??new Date());
+  const [date, setdate] = useState(selected ?? new Date());
   return (
     <View>
       {title && <TextComponent text={title} />}
@@ -32,7 +32,11 @@ const DateTimePickerComponent = (props: Props) => {
             style={{flex: 1}}
             text={
               selected
-                ? type=='time'?`${selected.getHours()}:${selected.getMinutes()}`: `${selected.getDate() } / ${selected.getMonth()+1} / ${selected.getFullYear()}`
+                ? type == 'time'
+                  ? `${selected.getHours()}:${selected.getMinutes()}`
+                  : `${selected.getDate()} / ${
+                      selected.getMonth() + 1
+                    } / ${selected.getFullYear()}`
                 : pleaceHolder
                 ? pleaceHolder
                 : ''
@@ -62,15 +66,17 @@ const DateTimePickerComponent = (props: Props) => {
               backgroundColor: colors.white,
             }}>
             <DatePicker
-              mode={type?type:'datetime'}
+              mode={type ? type : 'datetime'}
               date={selected ?? new Date()}
               onDateChange={val => setdate(val)}
-              locale='vi'
+              locale="vi"
             />
 
-            <TouchableOpacity onPress={() =>{
-                onselected(date)
-                setisvisibedatetime(false)}}>
+            <TouchableOpacity
+              onPress={() => {
+                onselected(date);
+                setisvisibedatetime(false);
+              }}>
               <Text>Confirm</Text>
             </TouchableOpacity>
 

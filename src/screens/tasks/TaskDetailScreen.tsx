@@ -11,7 +11,7 @@ import React, {useEffect, useState} from 'react';
 import {StackActions, useNavigation, useRoute} from '@react-navigation/native';
 import {RootStack, RouterProp} from '../../navigations/TypeChecking';
 import firestore from '@react-native-firebase/firestore';
-import {AttachmentModel, taskModel} from '../../model/TaskModel';
+import {AttachmentModel, SubTaskModel, taskModel} from '../../model/TaskModel';
 import ContainerComponent from '../../components/ContainerComponent';
 import {styles} from '../../styles/globalStyle';
 import SectionConponent from '../../components/SectionConponent';
@@ -21,6 +21,7 @@ import {
   AddSquare,
   Back,
   Calendar,
+  Check,
   Clock,
   ProfileDelete,
   TickCircle,
@@ -38,6 +39,7 @@ import InputComponent from '../../components/InputComponent';
 import UploadFileFromStorageCompopnent from '../../components/UploadFileFromStorageCompopnent';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import SubTaskModal from '../../modals/SubTaskModal';
 const TaskDetailScreen = () => {
   const [dataByid, setdataByid] = useState<taskModel>();
   const {params} = useRoute<RouterProp>();
@@ -47,14 +49,19 @@ const TaskDetailScreen = () => {
   const [showClaueProgress, setshowClaueProgress] = useState(0);
   const [showButtonUpdate, setshowButtonUpdate] = useState(false);
 
+  const [UrgenTask, setUrgenTask] = useState(data.isUrgen);
+  const [showModalSubTask, setshowModalSubTask] = useState(false);
   const [dataAttachment, setdataAttachment] = useState<AttachmentModel[]>(
     data.attachment,
   );
+  const [dataFilterChangeValue, setdataFilterChangeValue] = useState<
+    SubTaskModel[]
+  >([]);
 
   const [dataDescriptionUpdate, setdataDescriptionUpdate] = useState(
     data.description,
   );
-  console.log('data params', dataAttachment.length);
+  console.log('data params', data.progress);
   const getdataByid = () => {
     firestore()
       .collection(`tasks`)
@@ -68,16 +75,56 @@ const TaskDetailScreen = () => {
     if (
       valueProgress === data.progress &&
       dataDescriptionUpdate.match(data.description) &&
-      data.attachment.length === dataAttachment.length
+      data.attachment.length === dataAttachment.length&&  data.isUrgen ===UrgenTask
     ) {
       setshowButtonUpdate(false);
     } else {
       setshowButtonUpdate(true);
     }
-  }, [valueProgress, dataDescriptionUpdate, dataAttachment]);
+  }, [valueProgress, dataDescriptionUpdate, dataAttachment , UrgenTask]);
   useEffect(() => {
     getdataByid();
   }, []);
+  useEffect(() => {
+    getDateFromFireStore();
+  }, []);
+
+
+  useEffect(()=>{
+      if(dataFilterChangeValue.length>0){
+        const completedPercent = dataFilterChangeValue.filter(data =>data.isCompleted).length/dataFilterChangeValue.length
+        setvalueProgress(completedPercent)
+
+   
+      }else{
+        setvalueProgress(0)
+      }
+  },[dataFilterChangeValue])
+  const getDateFromFireStore = () => {
+    try {
+      firestore()
+        .collection('subtasks')
+        .onSnapshot(snap => {
+          const dataArray: any = [];
+          if (snap.empty) {
+            console.log('data not found');
+          } else {
+            snap.forEach((datasnap, index) => {
+              if (datasnap.data().taskId == data.taskid) {
+                dataArray.push({...datasnap.data() , idSubtask:datasnap.id});
+              }
+          
+              const datacopy = [...dataArray];
+              setdataFilterChangeValue(datacopy);
+              
+        
+            });
+          }
+        });
+    } catch (error: any) {
+      console.log(error.message);
+    }
+  };
 
   const navigation = useNavigation<RootStack>();
   const convertTimestampToDate = (data: any) => {
@@ -111,14 +158,30 @@ const TaskDetailScreen = () => {
       .doc(data.taskid)
       .update({
         attachment: [...dataAttachment],
+        isUrgen :UrgenTask,
         description: dataDescriptionUpdate,
         progress: valueProgress,
-        title: 'update test2',
+    
       })
       .then(() => {
         console.log('User updated!');
+        setshowButtonUpdate(false);
       });
   };
+
+
+  const handleUpdateSubTask = async(idsubtask:string , iscompleted:boolean)=>{
+
+
+  await firestore().doc(`subtasks/${idsubtask}`).update({
+    isCompleted : !iscompleted,
+
+  }).then(()=>console.log("update sussesfuly")).catch(error=>console.log(error.message))
+
+  }
+
+
+
   return (
     <>
       <ScrollView style={{backgroundColor: colors.bgcolor, flex: 1}}>
@@ -183,7 +246,12 @@ const TaskDetailScreen = () => {
             onChange={val => setdataDescriptionUpdate(val)}
             title=""
           />
-
+                   <RowComponent  jutifilecontent='flex-start'style={{alignItems: 'center', justifyContent:'flex-start' , marginVertical: 10 , }}>
+                  <TouchableOpacity onPress={()=>setUrgenTask(!UrgenTask)}>
+                    <Check size={20} color='white' variant={UrgenTask?"Bold":'Outline'} />
+                  </TouchableOpacity>
+                      <TextComponent text="Urrgen:" />
+          </RowComponent>
           <RowComponent style={{alignItems: 'center', marginVertical: 10}}>
             <TextComponent text="File & Links:" flex={1} />
             <UploadFileFromStorageCompopnent
@@ -255,9 +323,11 @@ const TaskDetailScreen = () => {
 
         <RowComponent style={{paddingHorizontal: 20}}>
           <Slider
-            value={data.progress[0]}
-            onValueChange={(val: any) => setvalueProgress(val)}
+            disabled
+            value={valueProgress}
+          onValueChange={(val)=>setvalueProgress(val)}
             containerStyle={{flex: 1}}
+
             minimumTrackTintColor={colors.green}
             minimumTrackStyle={{padding: 5, borderRadius: 100}}
             maximumTrackStyle={{padding: 5, borderRadius: 100}}
@@ -279,34 +349,50 @@ const TaskDetailScreen = () => {
             font={fonts.regular}
             size={24}
           />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setshowModalSubTask(true)}>
             <AddSquare size={24} color={colors.green} variant="Bold" />
           </TouchableOpacity>
         </RowComponent>
-
-        {Array.from({length: 4}).map((data, index) => (
-          <CardComponent
-            key={index}
-            bgColor={colors.gray}
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginVertical: 10,
-              marginHorizontal: 20,
-              borderRadius: 12,
-            }}>
-            <RowComponent style={{alignItems: 'center', flex: 1}}>
-              <TickCircle
-                size={20}
-                color={colors.green}
-                variant="Bold"
-                style={{marginRight: 10}}
-              />
-              <TextComponent text="Task" flex={1} />
-            </RowComponent>
-          </CardComponent>
-        ))}
+        {dataFilterChangeValue &&
+          dataFilterChangeValue.map((data, index) => (
+            <CardComponent
+              key={index}
+              bgColor={colors.gray}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginVertical: 10,
+                marginHorizontal: 20,
+                borderRadius: 12,
+              }}>
+              <RowComponent style={{alignItems: 'center', flex: 1}}  onPress={()=>handleUpdateSubTask(data.idSubtask??'' , data.isCompleted)} >
+                <TickCircle
+                  size={20}
+                  color={colors.green}
+                  variant={data.isCompleted ? 'Bold' : 'Outline'}
+                  style={{marginRight: 10}}
+                />
+                <View style={{flex: 1}}>
+                  <TextComponent text={data.title} flex={1} />
+                  <TextComponent
+                    text={
+                      new Date(data.createdAt).getDate() +
+                      '-' +
+                      namedate[new Date(data.createdAt).getMonth()]  +
+                      '-' +
+                      new Date(data.createdAt).getFullYear()
+                    }
+                  />
+                </View>
+              </RowComponent>
+            </CardComponent>
+          ))}
       </ScrollView>
+      <SubTaskModal
+        visible={showModalSubTask}
+        onclose={() => setshowModalSubTask(false)}
+        taskid={data.taskid}
+      />
 
       {showButtonUpdate ? (
         <ButtonComponent

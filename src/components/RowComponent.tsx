@@ -24,7 +24,7 @@ const RowComponent = (props: Props) => {
     <TouchableOpacity
       onPress={() => onPress()}
       style={[
-        styles.row, styles.texinput,
+        styles.row,
         style,
         {
           justifyContent: jutifilecontent ?? 'center',

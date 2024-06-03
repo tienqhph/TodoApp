@@ -9,7 +9,7 @@ export type taskModel = {
   color?: string;
   attachment: AttachmentModel[];
   progress?: number;
-
+  isUrgen:boolean
   taskid?: string;
 };
 
@@ -19,3 +19,14 @@ export type AttachmentModel = {
   url?: string;
   type?: string;
 };
+
+
+export interface SubTaskModel {
+  createdAt: number;
+  description: string;
+  isCompleted: boolean;
+  taskId: string;
+  title: string;
+  updatedAt: number;
+  idSubtask?:string
+}

@@ -4,5 +4,6 @@ export  enum NAME_NAVIGATION  {
  SEARCH = 'Search' , 
  LOGIN = 'Login' , 
     SIGNUP = 'SignUp' , 
-    TASKDETAIL = 'TaskDetail'
+    TASKDETAIL = 'TaskDetail' ,
+    ALLTASK = 'AllTask'
 }
