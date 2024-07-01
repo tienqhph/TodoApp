@@ -38,6 +38,8 @@ import SpaceComponent from '../../components/SpaceComponent';
 import {taskModel} from '../../model/TaskModel';
 import {RootStack} from '../../navigations/TypeChecking';
 import { namedate } from '../../constants/const';
+import { PushNotification } from '../../utils/pushNotification';
+
 
 
 const HomeScreen = () => {
@@ -61,6 +63,13 @@ const HomeScreen = () => {
         setdataUser(dataget.data);
       });
   };
+
+  useEffect(() => {
+    
+    PushNotification.checkPermission()
+    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
+  }, []);
 useEffect(() => {
     if(dataTasks){
         const persentTaskDone =Math.floor(dataTasks.filter(element=>element.progress===1).length/dataTasks.length*100)
@@ -108,6 +117,8 @@ useEffect(() => {
     return new Date(ts);
   };
   const GotoAddTask = async () => {
+
+
     navigation.push('AddTask');
   };
   const handleGotoTaskDetail = (id: any, color: string) => {
@@ -251,10 +262,12 @@ useEffect(() => {
                         />
 
                         <View style={{marginTop: 60}}>
-                          <AvatarComponent
-                            idtask={dataTasks[0].taskid ?? ''}
-                            uids={dataTasks[0].uids ?? []}
-                          />
+                       {dataTasks[0].uids?
+                           <AvatarComponent
+                           idtask={dataTasks[0].taskid ?? ''}
+                           uids={dataTasks[0].uids ?? []}
+                         />:<></>
+                       }
 
                           <ProgressBarComponent
                             percent={Math.floor(

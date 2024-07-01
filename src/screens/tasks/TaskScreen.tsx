@@ -25,6 +25,7 @@ import {
 } from 'react-native-document-picker';
 import UploadFileFromStorageCompopnent from '../../components/UploadFileFromStorageCompopnent';
 import auth from '@react-native-firebase/auth';
+import { PushNotification } from '../../utils/pushNotification';
 const initialVal: taskModel = {
   title: '',
   description: '',
@@ -111,6 +112,12 @@ const TaskScreen = () => {
             navigation.goBack()
           });
       } else {
+
+      if(dataUserModal.length>0){
+          dataUserModal.forEach(data =>{
+            data.value!==user.uid&& PushNotification.handlePushNotification({title:`New Task Assign` , body:`You have a new task by ${user.email} ` , memberId:data.value})
+          })
+      }
         await firestore()
           .collection('tasks')
           .add(data)

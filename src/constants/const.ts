@@ -5,6 +5,9 @@ export const image = {
   imgaddfile: require('./../assets/image/new-document.png'),
 };
 
+
+export const  BearerToken = 'ya29.a0AXooCgtxC3J3lMrsiIlg0j_L6_z3A7fijs5TlRpZ1tqYOcyq0pXY2tAQWz27gLsl45gKVLHKS449QnCPs9aGsyX0m-gcJbn72O6Wu4kpWTCg1Rgr0XVMInhVLLWTm5QRfexefmp8EQ3U8XkGaRRopOOY9mGw8lnydRnpaCgYKATYSARASFQHGX2Mivj0rGfuIdNVMN_tGAYM94Q0171'
+
 export const namedate = [
   'Jan',
   'Feb',
